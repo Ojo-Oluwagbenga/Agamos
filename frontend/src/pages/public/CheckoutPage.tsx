@@ -107,8 +107,7 @@ export const CheckoutPage: React.FC = () => {
 
     try {
       const result = await api.orders.checkout(payload);
-      clearCart();
-      success('Order Placed', 'Proceeding to Paystack payment gateway.');
+      success('Order Created', 'Redirecting to secure Paystack payment gateway.');
 
       const authUrl = result.payment?.authorization_url;
       if (authUrl) {

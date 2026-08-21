@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Package, Search, Sparkles } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Plus, Edit2, Package, Search, Sparkles, Image as ImageIcon, Upload, Trash2, CheckCircle2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Product, ProductCategory } from '../../types';
 import { formatNGN } from '../../utils/formatters';
@@ -15,7 +15,7 @@ export const AdminProductsPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Form
+  // Form State
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
   const [categoryId, setCategoryId] = useState<number>(0);
@@ -25,11 +25,15 @@ export const AdminProductsPage: React.FC = () => {
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSessionProduct, setIsSessionProduct] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { success, error } = useToast();
 
   const loadData = async () => {
@@ -65,6 +69,9 @@ export const AdminProductsPage: React.FC = () => {
     setLowStockThreshold(5);
     setShortDescription('');
     setDescription('');
+    setImageUrl('');
+    setImageFile(null);
+    setImagePreview(null);
     setIsSessionProduct(false);
     setIsFeatured(false);
     setIsActive(true);
@@ -82,16 +89,35 @@ export const AdminProductsPage: React.FC = () => {
     setLowStockThreshold(p.low_stock_threshold);
     setShortDescription(p.short_description || '');
     setDescription(p.description || '');
+    
+    const existingImg = p.images?.find((img) => img.is_primary)?.image || p.images?.[0]?.image || '';
+    setImageUrl(existingImg);
+    setImageFile(null);
+    setImagePreview(existingImg || null);
+
     setIsSessionProduct(p.is_session_product);
     setIsFeatured(p.is_featured);
     setIsActive(p.is_active);
     setModalOpen(true);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const payload = {
+
+    const payload: any = {
       name,
       sku,
       category: categoryId,
@@ -106,14 +132,30 @@ export const AdminProductsPage: React.FC = () => {
       is_active: isActive,
     };
 
+    // If image URL is typed directly without file upload
+    if (imageUrl && !imageFile) {
+      payload.image_url = imageUrl;
+    }
+
     try {
+      let savedProduct: Product;
       if (editingProduct) {
-        await api.admin.updateProduct(editingProduct.id, payload);
+        savedProduct = await api.admin.updateProduct(editingProduct.id, payload);
         success('Product Updated', `${name} updated.`);
       } else {
-        await api.admin.createProduct(payload);
+        savedProduct = await api.admin.createProduct(payload);
         success('Product Created', `${name} created.`);
       }
+
+      // If a file was selected, upload the image file to the product
+      if (imageFile && savedProduct?.id) {
+        try {
+          await api.admin.uploadProductImage(savedProduct.id, imageFile, true);
+        } catch (uploadErr: any) {
+          console.warn('Image upload error:', uploadErr);
+        }
+      }
+
       setModalOpen(false);
       loadData();
     } catch (err: any) {
@@ -125,7 +167,7 @@ export const AdminProductsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="flex justify-between items-center border-b border-luxury-border pb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-luxury-border pb-6">
         <div>
           <span className="text-[10px] uppercase font-sans tracking-ultra-wide text-luxury-gold font-semibold">
             Catalog Management
@@ -144,7 +186,7 @@ export const AdminProductsPage: React.FC = () => {
           <table className="w-full text-left text-xs text-luxury-muted">
             <thead className="bg-luxury-offblack uppercase text-[10px] tracking-widest text-luxury-gold border-b border-luxury-border font-semibold">
               <tr>
-                <th className="py-3.5 px-4">Product Name & SKU</th>
+                <th className="py-3.5 px-4">Item & Image</th>
                 <th className="py-3.5 px-4">Category</th>
                 <th className="py-3.5 px-4">Price</th>
                 <th className="py-3.5 px-4">Stock Level</th>
@@ -153,44 +195,62 @@ export const AdminProductsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-luxury-border/60">
-              {products.map((p) => (
-                <tr key={p.id} className="hover:bg-luxury-offblack/40">
-                  <td className="py-3.5 px-4">
-                    <p className="font-medium text-luxury-white">{p.name}</p>
-                    <p className="font-mono text-[10px] text-luxury-gold">{p.sku}</p>
-                  </td>
-                  <td className="py-3.5 px-4">{p.category_name}</td>
-                  <td className="py-3.5 px-4 font-semibold text-luxury-white">
-                    {formatNGN(p.effective_price || p.price)}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    {p.stock_quantity <= 0 ? (
-                      <span className="text-red-400 font-semibold">Out of Stock</span>
-                    ) : p.is_low_stock ? (
-                      <span className="text-amber-400 font-semibold">{p.stock_quantity} (Low)</span>
-                    ) : (
-                      <span className="text-emerald-400">{p.stock_quantity} Units</span>
-                    )}
-                  </td>
-                  <td className="py-3.5 px-4 space-x-1">
-                    {p.is_session_product && (
-                      <span className="px-1.5 py-0.5 bg-luxury-offblack text-luxury-gold border border-luxury-gold/40 text-[9px] uppercase font-mono">
-                        Session Addon
-                      </span>
-                    )}
-                    {p.is_featured && (
-                      <span className="px-1.5 py-0.5 bg-luxury-card text-luxury-white border border-luxury-border text-[9px] uppercase">
-                        Featured
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <Button variant="outline-gold" size="sm" onClick={() => openEditModal(p)}>
-                      Edit
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              {products.map((p) => {
+                const prodImg = p.images?.find((img) => img.is_primary)?.image || p.images?.[0]?.image;
+                return (
+                  <tr key={p.id} className="hover:bg-luxury-offblack/40 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-11 h-11 bg-luxury-offblack border border-luxury-border flex-shrink-0 flex items-center justify-center overflow-hidden">
+                          {prodImg ? (
+                            <img
+                              src={prodImg}
+                              alt={p.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon className="w-4 h-4 text-luxury-darkmuted" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-luxury-white">{p.name}</p>
+                          <p className="font-mono text-[10px] text-luxury-gold">{p.sku}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">{p.category_name}</td>
+                    <td className="py-3.5 px-4 font-semibold text-luxury-white">
+                      {formatNGN(p.effective_price || p.price)}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      {p.stock_quantity <= 0 ? (
+                        <span className="text-red-400 font-semibold">Out of Stock</span>
+                      ) : p.is_low_stock ? (
+                        <span className="text-amber-400 font-semibold">{p.stock_quantity} (Low)</span>
+                      ) : (
+                        <span className="text-emerald-400">{p.stock_quantity} Units</span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 space-x-1">
+                      {p.is_session_product && (
+                        <span className="px-1.5 py-0.5 bg-luxury-offblack text-luxury-gold border border-luxury-gold/40 text-[9px] uppercase font-mono">
+                          Session Addon
+                        </span>
+                      )}
+                      {p.is_featured && (
+                        <span className="px-1.5 py-0.5 bg-luxury-card text-luxury-white border border-luxury-border text-[9px] uppercase">
+                          Featured
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <Button variant="outline-gold" size="sm" onClick={() => openEditModal(p)}>
+                        Edit
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -207,6 +267,80 @@ export const AdminProductsPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Product Name *" value={name} onChange={(e) => setName(e.target.value)} required />
             <Input label="SKU *" value={sku} onChange={(e) => setSku(e.target.value)} required />
+          </div>
+
+          {/* Product Image Section */}
+          <div className="p-4 bg-luxury-offblack border border-luxury-border space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs uppercase tracking-widest text-luxury-gold font-medium flex items-center space-x-1.5">
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Product Display Image</span>
+              </label>
+              {imagePreview && (
+                <span className="text-[10px] text-emerald-400 font-mono flex items-center space-x-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Image Loaded</span>
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+              {/* Preview Thumbnail */}
+              <div className="sm:col-span-4 aspect-square max-h-32 bg-luxury-card border border-luxury-border flex items-center justify-center overflow-hidden relative group">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-center p-3 text-luxury-muted">
+                    <ImageIcon className="w-6 h-6 mx-auto mb-1 stroke-1 text-luxury-darkmuted" />
+                    <span className="text-[10px]">No image set</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload & URL Controls */}
+              <div className="sm:col-span-8 space-y-2.5">
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline-gold"
+                    size="sm"
+                    className="w-full"
+                    leftIcon={<Upload className="w-3.5 h-3.5" />}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    Upload Image File
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-medium block">
+                    Or Enter Hosted Image URL
+                  </span>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/... or https://..."
+                    value={imageUrl}
+                    onChange={(e) => {
+                      setImageUrl(e.target.value);
+                      setImagePreview(e.target.value || null);
+                      setImageFile(null);
+                    }}
+                    className="w-full bg-luxury-card text-luxury-white placeholder-luxury-darkmuted border border-luxury-border px-3 py-1.5 text-xs outline-none focus:border-luxury-gold"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -237,7 +371,7 @@ export const AdminProductsPage: React.FC = () => {
           <div className="space-y-1.5 text-left">
             <label className="text-xs uppercase tracking-widest text-luxury-muted font-medium">Full Formulation Details & Ingredients</label>
             <textarea
-              rows={4}
+              rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full bg-luxury-offblack text-luxury-white placeholder-luxury-darkmuted border border-luxury-border p-3 text-xs outline-none focus:border-luxury-gold"

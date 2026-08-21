@@ -22,9 +22,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('agamos_access_token');
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
+
+  if (!(options.body instanceof FormData)) {
+    (headers as Record<string, string>)['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
@@ -212,6 +215,15 @@ export const api = {
     getProducts: () => requestList<Product>('/admin/products/'),
     createProduct: (data: any) => request<Product>('/admin/products/', { method: 'POST', body: JSON.stringify(data) }),
     updateProduct: (id: number, data: any) => request<Product>(`/admin/products/${id}/`, { method: 'PUT', body: JSON.stringify(data) }),
+    uploadProductImage: (id: number, file: File, isPrimary: boolean = true) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('is_primary', isPrimary ? 'true' : 'false');
+      return request<Product>(`/admin/products/${id}/upload_image/`, {
+        method: 'POST',
+        body: formData,
+      });
+    },
     deleteProduct: (id: number) => request<void>(`/admin/products/${id}/`, { method: 'DELETE' }),
 
     // Inventory

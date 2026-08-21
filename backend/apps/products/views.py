@@ -1,4 +1,7 @@
-from rest_framework import viewsets, generics, permissions, filters
+from rest_framework import viewsets, generics, permissions, filters, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .models import ProductCategory, Product, ProductImage
 from .serializers import ProductCategorySerializer, ProductSerializer, ProductImageSerializer
 
@@ -45,6 +48,27 @@ class AdminProductViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'sku', 'category__name']
+
+    @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser, JSONParser])
+    def upload_image(self, request, pk=None):
+        product = self.get_object()
+        image_file = request.FILES.get('image')
+        image_url = request.data.get('image_url')
+        is_primary = request.data.get('is_primary', 'true').lower() in ('true', '1')
+
+        if not image_file and not image_url:
+            return Response({'error': 'No image file or image URL provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if is_primary:
+            product.images.filter(is_primary=True).update(is_primary=False)
+
+        if image_file:
+            ProductImage.objects.create(product=product, image=image_file, is_primary=is_primary)
+        else:
+            ProductImage.objects.create(product=product, image=image_url, is_primary=is_primary)
+
+        serializer = ProductSerializer(product, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class AdminProductCategoryViewSet(viewsets.ModelViewSet):

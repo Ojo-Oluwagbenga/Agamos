@@ -4,6 +4,7 @@ import { CheckCircle2, ShoppingBag, Truck, Store, ArrowRight, AlertCircle } from
 import confetti from 'canvas-confetti';
 import { api } from '../../services/api';
 import { Order } from '../../types';
+import { useCart } from '../../context/CartContext';
 import { formatNGN, formatDate } from '../../utils/formatters';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -14,8 +15,7 @@ export const OrderConfirmationPage: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const reference = referenceParam || searchParams.get('reference') || searchParams.get('trxref');
+  const { clearCart } = useCart();
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -43,6 +43,9 @@ export const OrderConfirmationPage: React.FC = () => {
 
         const data = await api.orders.getByRef(orderRefToFetch);
         setOrder(data);
+
+        // Clear bag only after order record is confirmed
+        clearCart();
 
         confetti({
           particleCount: 80,
