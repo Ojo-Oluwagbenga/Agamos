@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: agamos_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agamos_backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python seed_agamos.py &&
+             gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - ./backend:/app
+      - media_volume:/app/media
+      - static_volume:/app/staticfiles
+    environment:
+      - DJANGO_SECRET_KEY=production-secret-key-agamos-luxury-2026
+      - DJANGO_DEBUG=False
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend
+      - REDIS_URL=redis://redis:6379/0
+      - PAYSTACK_SECRET_KEY=sk_test_agamos_dummy_key_for_local_development
+      - PAYSTACK_PUBLIC_KEY=pk_test_agamos_dummy_key_for_local_development
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agamos_celery_worker
+    command: celery -A core worker -l info
+    volumes:
+      - ./backend:/app
+    environment:
+      - DJANGO_SECRET_KEY=production-secret-key-agamos-luxury-2026
+      - DJANGO_DEBUG=False
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - backend
+    restart: unless-stopped
+
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agamos_celery_beat
+    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./backend:/app
+    environment:
+      - DJANGO_SECRET_KEY=production-secret-key-agamos-luxury-2026
+      - DJANGO_DEBUG=False
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - backend
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agamos_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  media_volume:
+  static_volume:
