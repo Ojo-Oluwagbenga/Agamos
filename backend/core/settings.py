@@ -189,5 +189,8 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'AGAMOS Luxury Concierge <concierge@agamos.com>')
 
+# Public Frontend URL for Email Links
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://agamos.vercel.app')
+
 # QR Code Signing Secret
 QR_SECURITY_SALT = os.getenv('QR_SECURITY_SALT', 'agamos-qr-cryptographic-salt-2026')

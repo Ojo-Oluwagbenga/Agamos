@@ -23,6 +23,8 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
     cta_url = None
     cta_text = None
 
+    base_url = getattr(settings, 'FRONTEND_URL', 'https://agamos.vercel.app').rstrip('/')
+
     if email_type == 'BOOKING_CONFIRMATION':
         booking_ref = context_data.get('booking_reference')
         body_html = f"""
@@ -39,7 +41,7 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
             Your secure verification QR code is attached to your booking record. Please present this QR code to the concierge upon arrival for seamless check-in.
         </p>
         """
-        cta_url = f"http://localhost:5173/booking/{booking_ref}"
+        cta_url = f"{base_url}/booking/{booking_ref}"
         cta_text = "View Booking & QR Code"
 
     elif email_type == 'REMINDER_24H':
@@ -57,7 +59,7 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
             If you need to reschedule, please notify us at least 6 hours in advance.
         </p>
         """
-        cta_url = f"http://localhost:5173/booking/{booking_ref}"
+        cta_url = f"{base_url}/booking/{booking_ref}"
         cta_text = "View Appointment"
 
     elif email_type == 'ORDER_CONFIRMATION':
@@ -74,7 +76,7 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
             Our logistics team is preparing your bespoke packaging. You will be notified once ready for pickup or dispatched with courier.
         </p>
         """
-        cta_url = f"http://localhost:5173/order/{order_ref}"
+        cta_url = f"{base_url}/order/{order_ref}"
         cta_text = "Track Order Status"
 
     elif email_type == 'PASSWORD_RESET':
@@ -82,7 +84,7 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
         <p>We received a request to reset your password for your AGAMOS account.</p>
         <p>Click the link below to securely choose a new password. This link is valid for 24 hours.</p>
         """
-        cta_url = f"http://localhost:5173{context_data.get('reset_link')}"
+        cta_url = f"{base_url}{context_data.get('reset_link')}"
         cta_text = "Reset Password"
 
     elif email_type == 'BOOKING_CANCELLED':
@@ -90,7 +92,7 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
         <p>Your appointment ({context_data.get('booking_reference')}) for {context_data.get('service_name')} has been cancelled as requested.</p>
         <p>We hope to welcome you to the sanctuary of AGAMOS in the near future.</p>
         """
-        cta_url = "http://localhost:5173/services"
+        cta_url = f"{base_url}/services"
         cta_text = "Browse Services"
 
     else:

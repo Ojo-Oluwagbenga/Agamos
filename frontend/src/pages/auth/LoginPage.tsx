@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -29,10 +29,56 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  // Initialize Google Identity Services if client ID is configured
+  useEffect(() => {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!googleClientId || !(window as any).google?.accounts?.id) return;
+
+    try {
+      (window as any).google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (response: any) => {
+          if (response.credential) {
+            setSubmitting(true);
+            try {
+              await googleLogin(response.credential);
+              navigate(from, { replace: true });
+            } catch (err) {
+              console.error('Google Sign-In failed', err);
+            } finally {
+              setSubmitting(false);
+            }
+          }
+        },
+      });
+
+      const btnSlot = document.getElementById('google-btn-slot');
+      if (btnSlot) {
+        (window as any).google.accounts.id.renderButton(btnSlot, {
+          theme: 'filled_black',
+          size: 'large',
+          width: '100%',
+          text: 'continue_with',
+          shape: 'rectangular',
+        });
+      }
+    } catch (e) {
+      console.warn('Google Identity Services warning:', e);
+    }
+  }, [from, navigate, googleLogin]);
+
+  const handleGoogleClick = () => {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (googleClientId && (window as any).google?.accounts?.id) {
+      (window as any).google.accounts.id.prompt();
+    } else {
+      handleSimulateGoogleLogin();
+    }
+  };
+
   const handleSimulateGoogleLogin = async () => {
     setSubmitting(true);
     try {
-      // Simulates Google OAuth ID token for instant testing
       const testToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(
         JSON.stringify({
           email: 'vip.client@agamos.com',
@@ -68,10 +114,12 @@ export const LoginPage: React.FC = () => {
 
         {/* Form Card */}
         <div className="bg-luxury-card border border-luxury-border p-8 space-y-6 shadow-2xl">
-          {/* Quick Google OAuth CTA */}
+          {/* Google OAuth Slot / Button */}
+          <div id="google-btn-slot" className="w-full flex justify-center" />
+
           <button
             type="button"
-            onClick={handleSimulateGoogleLogin}
+            onClick={handleGoogleClick}
             disabled={submitting}
             className="w-full py-3 px-4 bg-luxury-offblack border border-luxury-border hover:border-luxury-gold flex items-center justify-center space-x-3 text-xs uppercase tracking-widest font-medium text-luxury-white transition-colors"
           >
