@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Edit2, Package, Search, Sparkles, Image as ImageIcon, Upload, Trash2, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit2, Package, Search, Sparkles, Image as ImageIcon, Upload, Trash2, CheckCircle2, X } from 'lucide-react';
 import { api } from '../../services/api';
 import { Product, ProductCategory } from '../../types';
 import { formatNGN } from '../../utils/formatters';
@@ -24,12 +24,12 @@ export const AdminProductsPage: React.FC = () => {
   const [salePrice, setSalePrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState(20);
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
-  const [shortDescription, setShortDescription] = useState('');
-  const [description, setDescription] = useState('');
+  const [shortDescription, setShortDescription] = useState('Luxury Hair & Body Formulation');
+  const [description, setDescription] = useState('Handcrafted with pure botanical elixirs, organic oils, and 24K gold infusions.');
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSessionProduct, setIsSessionProduct] = useState(false);
+  const [isSessionProduct, setIsSessionProduct] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,7 +46,7 @@ export const AdminProductsPage: React.FC = () => {
       ]);
       setCategories(cats);
       setProducts(prods);
-      if (cats.length > 0 && !categoryId) {
+      if (cats.length > 0 && (!categoryId || categoryId === 0)) {
         setCategoryId(cats[0].id);
       }
     } catch (err: any) {
@@ -64,16 +64,17 @@ export const AdminProductsPage: React.FC = () => {
     setEditingProduct(null);
     setName('');
     setSku(`AGM-PRD-${Math.floor(1000 + Math.random() * 9000)}`);
+    setCategoryId(categories.length > 0 ? categories[0].id : 1);
     setPrice('15000');
     setSalePrice('');
     setStockQuantity(20);
     setLowStockThreshold(5);
-    setShortDescription('');
-    setDescription('');
+    setShortDescription('Luxury Hair & Body Formulation');
+    setDescription('Handcrafted with pure botanical elixirs, organic oils, and 24K gold infusions.');
     setImageUrl('');
     setImageFile(null);
     setImagePreview(null);
-    setIsSessionProduct(false);
+    setIsSessionProduct(true);
     setIsFeatured(false);
     setIsActive(true);
     setModalOpen(true);
@@ -83,13 +84,13 @@ export const AdminProductsPage: React.FC = () => {
     setEditingProduct(p);
     setName(p.name);
     setSku(p.sku);
-    setCategoryId(p.category);
+    setCategoryId(p.category || (categories[0]?.id || 1));
     setPrice(String(p.price));
     setSalePrice(p.sale_price ? String(p.sale_price) : '');
     setStockQuantity(p.stock_quantity);
     setLowStockThreshold(p.low_stock_threshold);
-    setShortDescription(p.short_description || '');
-    setDescription(p.description || '');
+    setShortDescription(p.short_description || 'Luxury Hair & Body Formulation');
+    setDescription(p.description || 'Handcrafted with pure botanical elixirs, organic oils, and 24K gold infusions.');
     
     const existingImg = getProductImageUrl(p, '');
     setImageUrl(existingImg);
@@ -106,6 +107,7 @@ export const AdminProductsPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
+      setImageUrl('');
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -114,53 +116,57 @@ export const AdminProductsPage: React.FC = () => {
     }
   };
 
+  const clearImage = () => {
+    setImageFile(null);
+    setImageUrl('');
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
-    const payload: any = {
-      name,
-      sku,
-      category: categoryId,
-      price,
-      sale_price: salePrice || null,
-      stock_quantity: stockQuantity,
-      low_stock_threshold: lowStockThreshold,
-      short_description: shortDescription,
-      description,
-      is_session_product: isSessionProduct,
-      is_featured: isFeatured,
-      is_active: isActive,
-    };
+    const targetCategory = categoryId || (categories.length > 0 ? categories[0].id : 1);
 
-    // If image URL is typed directly without file upload
-    if (imageUrl && !imageFile) {
-      payload.image_url = imageUrl;
+    // Use FormData for direct single-request multipart upload
+    const formData = new FormData();
+    formData.append('name', name.trim());
+    formData.append('sku', sku.trim() || `AGM-PRD-${Math.floor(1000 + Math.random() * 9000)}`);
+    formData.append('category', String(targetCategory));
+    formData.append('price', String(price));
+    if (salePrice) {
+      formData.append('sale_price', String(salePrice));
+    }
+    formData.append('stock_quantity', String(stockQuantity));
+    formData.append('low_stock_threshold', String(lowStockThreshold));
+    formData.append('short_description', shortDescription.trim() || 'Luxury Formulation');
+    formData.append('description', description.trim() || 'Bespoke formulation.');
+    formData.append('is_session_product', isSessionProduct ? 'true' : 'false');
+    formData.append('is_featured', isFeatured ? 'true' : 'false');
+    formData.append('is_active', isActive ? 'true' : 'false');
+
+    if (imageFile) {
+      formData.append('image', imageFile);
+    } else if (imageUrl) {
+      formData.append('image_url', imageUrl.trim());
     }
 
     try {
-      let savedProduct: Product;
       if (editingProduct) {
-        savedProduct = await api.admin.updateProduct(editingProduct.id, payload);
-        success('Product Updated', `${name} updated.`);
+        await api.admin.updateProduct(editingProduct.id, formData);
+        success('Product Updated', `${name} has been updated.`);
       } else {
-        savedProduct = await api.admin.createProduct(payload);
-        success('Product Created', `${name} created.`);
-      }
-
-      // If a file was selected, upload the image file to the product
-      if (imageFile && savedProduct?.id) {
-        try {
-          await api.admin.uploadProductImage(savedProduct.id, imageFile, true);
-        } catch (uploadErr: any) {
-          console.warn('Image upload error:', uploadErr);
-        }
+        await api.admin.createProduct(formData);
+        success('Product Created', `${name} formulation added to catalog.`);
       }
 
       setModalOpen(false);
       loadData();
     } catch (err: any) {
-      error('Failed', err.message);
+      error('Failed to Save', err.message || 'Could not save product formulation.');
     } finally {
       setSaving(false);
     }
@@ -208,6 +214,9 @@ export const AdminProductsPage: React.FC = () => {
                               src={prodImg}
                               alt={p.name}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.png');
+                              }}
                             />
                           ) : (
                             <ImageIcon className="w-4 h-4 text-luxury-darkmuted" />
@@ -266,8 +275,8 @@ export const AdminProductsPage: React.FC = () => {
       >
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Product Name *" value={name} onChange={(e) => setName(e.target.value)} required />
-            <Input label="SKU *" value={sku} onChange={(e) => setSku(e.target.value)} required />
+            <Input label="Product Name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. 24K Gold Rejuvenating Face Oil" required />
+            <Input label="SKU Code" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Auto-generated if blank" />
           </div>
 
           {/* Product Image Section */}
@@ -275,19 +284,23 @@ export const AdminProductsPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <label className="text-xs uppercase tracking-widest text-luxury-gold font-medium flex items-center space-x-1.5">
                 <ImageIcon className="w-3.5 h-3.5" />
-                <span>Product Display Image</span>
+                <span>Product Display Image (Choose from PC or Enter URL)</span>
               </label>
               {imagePreview && (
-                <span className="text-[10px] text-emerald-400 font-mono flex items-center space-x-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span>Image Loaded</span>
-                </span>
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="text-[10px] text-red-400 hover:text-red-300 font-mono flex items-center space-x-1"
+                >
+                  <X className="w-3 h-3" />
+                  <span>Remove Image</span>
+                </button>
               )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
               {/* Preview Thumbnail */}
-              <div className="sm:col-span-4 aspect-square max-h-32 bg-luxury-card border border-luxury-border flex items-center justify-center overflow-hidden relative group">
+              <div className="sm:col-span-4 aspect-square max-h-32 bg-luxury-card border border-luxury-border flex items-center justify-center overflow-hidden relative">
                 {imagePreview ? (
                   <img
                     src={imagePreview}
@@ -297,7 +310,7 @@ export const AdminProductsPage: React.FC = () => {
                 ) : (
                   <div className="text-center p-3 text-luxury-muted">
                     <ImageIcon className="w-6 h-6 mx-auto mb-1 stroke-1 text-luxury-darkmuted" />
-                    <span className="text-[10px]">No image set</span>
+                    <span className="text-[10px]">No image selected</span>
                   </div>
                 )}
               </div>
@@ -313,7 +326,7 @@ export const AdminProductsPage: React.FC = () => {
                     leftIcon={<Upload className="w-3.5 h-3.5" />}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    Upload Image File
+                    {imageFile ? `Selected: ${imageFile.name.slice(0, 20)}...` : 'Select Image from PC'}
                   </Button>
                   <input
                     ref={fileInputRef}
@@ -326,11 +339,11 @@ export const AdminProductsPage: React.FC = () => {
 
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-medium block">
-                    Or Enter Hosted Image URL
+                    Or Paste Hosted Image URL
                   </span>
                   <input
                     type="url"
-                    placeholder="https://images.unsplash.com/... or https://..."
+                    placeholder="https://images.unsplash.com/... or hosted image URL"
                     value={imageUrl}
                     onChange={(e) => {
                       setImageUrl(e.target.value);
@@ -358,23 +371,24 @@ export const AdminProductsPage: React.FC = () => {
                 ))}
               </select>
             </div>
-            <Input label="Base Price (NGN) *" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            <Input label="Price (NGN) *" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
             <Input label="Sale Price (Optional)" type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="e.g. 12000" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Input label="Stock Quantity *" type="number" value={stockQuantity} onChange={(e) => setStockQuantity(parseInt(e.target.value, 10))} required />
-            <Input label="Low-Stock Threshold *" type="number" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(parseInt(e.target.value, 10))} required />
+            <Input label="Low-Stock Alert Threshold" type="number" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(parseInt(e.target.value, 10))} required />
           </div>
 
-          <Input label="Short Summary *" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} required />
+          <Input label="Short Subtitle" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} placeholder="Short subtitle for luxury cards" />
 
           <div className="space-y-1.5 text-left">
-            <label className="text-xs uppercase tracking-widest text-luxury-muted font-medium">Full Formulation Details & Ingredients</label>
+            <label className="text-xs uppercase tracking-widest text-luxury-muted font-medium">Formulation Details & Ingredients</label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              placeholder="Detailed ingredients and usage guide"
               className="w-full bg-luxury-offblack text-luxury-white placeholder-luxury-darkmuted border border-luxury-border p-3 text-xs outline-none focus:border-luxury-gold"
             />
           </div>

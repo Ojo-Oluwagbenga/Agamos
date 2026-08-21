@@ -213,8 +213,14 @@ export const api = {
 
     // Products CRUD
     getProducts: () => requestList<Product>('/admin/products/'),
-    createProduct: (data: any) => request<Product>('/admin/products/', { method: 'POST', body: JSON.stringify(data) }),
-    updateProduct: (id: number, data: any) => request<Product>(`/admin/products/${id}/`, { method: 'PUT', body: JSON.stringify(data) }),
+    createProduct: (data: any) => request<Product>('/admin/products/', {
+      method: 'POST',
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    }),
+    updateProduct: (id: number, data: any) => request<Product>(`/admin/products/${id}/`, {
+      method: 'PUT',
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    }),
     uploadProductImage: (id: number, file: File, isPrimary: boolean = true) => {
       const formData = new FormData();
       formData.append('image', file);
