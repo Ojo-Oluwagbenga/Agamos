@@ -131,7 +131,7 @@ export const AdminProductsPage: React.FC = () => {
 
     const targetCategory = categoryId || (categories.length > 0 ? categories[0].id : 1);
 
-    // Use FormData for direct single-request multipart upload
+    // Single multipart FormData payload
     const formData = new FormData();
     formData.append('name', name.trim());
     formData.append('sku', sku.trim() || `AGM-PRD-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -266,67 +266,67 @@ export const AdminProductsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Add / Edit Product Modal */}
+      {/* Add / Edit Product Modal with Side-by-Side 2-Column Desktop Grid & Responsive Mobile Scrolling */}
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editingProduct ? 'Edit Formulation' : 'Add New Formulation'}
-        maxWidth="lg"
+        subtitle={editingProduct ? `Updating SKU ${editingProduct.sku}` : 'Fill in the formulation dossier and display image'}
+        maxWidth="4xl"
       >
-        <form onSubmit={handleSave} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Product Name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. 24K Gold Rejuvenating Face Oil" required />
-            <Input label="SKU Code" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Auto-generated if blank" />
-          </div>
+        <form onSubmit={handleSave} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {/* Left Column: Image, Category & Store Flags */}
+            <div className="lg:col-span-5 space-y-4">
+              
+              {/* Product Display Image Box */}
+              <div className="p-4 bg-luxury-offblack border border-luxury-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] uppercase tracking-widest text-luxury-gold font-semibold flex items-center space-x-1.5">
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Display Image</span>
+                  </label>
+                  {imagePreview && (
+                    <button
+                      type="button"
+                      onClick={clearImage}
+                      className="text-[10px] text-red-400 hover:text-red-300 font-mono flex items-center space-x-1"
+                    >
+                      <X className="w-3 h-3" />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </div>
 
-          {/* Product Image Section */}
-          <div className="p-4 bg-luxury-offblack border border-luxury-border space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-xs uppercase tracking-widest text-luxury-gold font-medium flex items-center space-x-1.5">
-                <ImageIcon className="w-3.5 h-3.5" />
-                <span>Product Display Image (Choose from PC or Enter URL)</span>
-              </label>
-              {imagePreview && (
-                <button
-                  type="button"
-                  onClick={clearImage}
-                  className="text-[10px] text-red-400 hover:text-red-300 font-mono flex items-center space-x-1"
-                >
-                  <X className="w-3 h-3" />
-                  <span>Remove Image</span>
-                </button>
-              )}
-            </div>
+                {/* Preview Thumbnail */}
+                <div className="aspect-square w-full max-h-48 bg-luxury-card border border-luxury-border flex items-center justify-center overflow-hidden relative group">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center p-4 text-luxury-muted">
+                      <ImageIcon className="w-8 h-8 mx-auto mb-2 stroke-1 text-luxury-darkmuted" />
+                      <span className="text-xs block text-luxury-muted">No Image Selected</span>
+                      <span className="text-[10px] text-luxury-darkmuted">Upload from device or enter URL</span>
+                    </div>
+                  )}
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-              {/* Preview Thumbnail */}
-              <div className="sm:col-span-4 aspect-square max-h-32 bg-luxury-card border border-luxury-border flex items-center justify-center overflow-hidden relative">
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-center p-3 text-luxury-muted">
-                    <ImageIcon className="w-6 h-6 mx-auto mb-1 stroke-1 text-luxury-darkmuted" />
-                    <span className="text-[10px]">No image selected</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Upload & URL Controls */}
-              <div className="sm:col-span-8 space-y-2.5">
-                <div>
+                {/* Upload Buttons */}
+                <div className="space-y-2 pt-1">
                   <Button
                     type="button"
                     variant="outline-gold"
                     size="sm"
-                    className="w-full"
+                    className="w-full text-xs"
                     leftIcon={<Upload className="w-3.5 h-3.5" />}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    {imageFile ? `Selected: ${imageFile.name.slice(0, 20)}...` : 'Select Image from PC'}
+                    {imageFile ? `File: ${imageFile.name.slice(0, 18)}...` : 'Select Image from PC'}
                   </Button>
                   <input
                     ref={fileInputRef}
@@ -335,82 +335,98 @@ export const AdminProductsPage: React.FC = () => {
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                </div>
 
-                <div className="space-y-1">
-                  <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-medium block">
-                    Or Paste Hosted Image URL
-                  </span>
-                  <input
-                    type="url"
-                    placeholder="https://images.unsplash.com/... or hosted image URL"
-                    value={imageUrl}
-                    onChange={(e) => {
-                      setImageUrl(e.target.value);
-                      setImagePreview(e.target.value || null);
-                      setImageFile(null);
-                    }}
-                    className="w-full bg-luxury-card text-luxury-white placeholder-luxury-darkmuted border border-luxury-border px-3 py-1.5 text-xs outline-none focus:border-luxury-gold"
-                  />
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-medium block">
+                      Or Image URL
+                    </span>
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={imageUrl}
+                      onChange={(e) => {
+                        setImageUrl(e.target.value);
+                        setImagePreview(e.target.value || null);
+                        setImageFile(null);
+                      }}
+                      className="w-full bg-luxury-card text-luxury-white placeholder-luxury-darkmuted border border-luxury-border px-3 py-1.5 text-xs outline-none focus:border-luxury-gold font-mono"
+                    />
+                  </div>
                 </div>
+              </div>
+
+              {/* Category Selector */}
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs uppercase tracking-widest text-luxury-muted font-medium">Category *</label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(parseInt(e.target.value, 10))}
+                  className="w-full bg-luxury-offblack text-luxury-white border border-luxury-border p-3 text-xs outline-none focus:border-luxury-gold"
+                  required
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Toggles */}
+              <div className="p-3.5 bg-luxury-offblack border border-luxury-border space-y-2.5">
+                <label className="flex items-center space-x-2.5 text-xs text-luxury-white cursor-pointer select-none">
+                  <input type="checkbox" checked={isSessionProduct} onChange={(e) => setIsSessionProduct(e.target.checked)} className="accent-[#D4AF37] w-4 h-4" />
+                  <span>Available as In-Session Add-on</span>
+                </label>
+                <label className="flex items-center space-x-2.5 text-xs text-luxury-white cursor-pointer select-none">
+                  <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="accent-[#D4AF37] w-4 h-4" />
+                  <span>Featured on Homepage</span>
+                </label>
+                <label className="flex items-center space-x-2.5 text-xs text-luxury-white cursor-pointer select-none">
+                  <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="accent-[#D4AF37] w-4 h-4" />
+                  <span>Active in Store</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Right Column: Name, Pricing, Stock & Descriptions */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input label="Formulation Name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. 24K Gold Rejuvenating Face Oil" required />
+                <Input label="SKU Code" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Auto-generated if empty" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input label="Regular Price (NGN) *" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+                <Input label="Sale Price (Optional)" type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="e.g. 12000" />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input label="Stock Quantity *" type="number" value={stockQuantity} onChange={(e) => setStockQuantity(parseInt(e.target.value, 10))} required />
+                <Input label="Low-Stock Alert Level" type="number" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(parseInt(e.target.value, 10))} required />
+              </div>
+
+              <Input label="Short Subtitle" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} placeholder="Subtitle for product cards" />
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs uppercase tracking-widest text-luxury-muted font-medium">Formulation Details & Ingredients</label>
+                <textarea
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Detailed botanical ingredients, usage rituals, and scent notes"
+                  className="w-full bg-luxury-offblack text-luxury-white placeholder-luxury-darkmuted border border-luxury-border p-3 text-xs outline-none focus:border-luxury-gold leading-relaxed"
+                />
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5 text-left">
-              <label className="text-xs uppercase tracking-widest text-luxury-muted font-medium">Category *</label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(parseInt(e.target.value, 10))}
-                className="w-full bg-luxury-offblack text-luxury-white border border-luxury-border p-3 text-xs outline-none focus:border-luxury-gold"
-                required
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <Input label="Price (NGN) *" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
-            <Input label="Sale Price (Optional)" type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="e.g. 12000" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Stock Quantity *" type="number" value={stockQuantity} onChange={(e) => setStockQuantity(parseInt(e.target.value, 10))} required />
-            <Input label="Low-Stock Alert Threshold" type="number" value={lowStockThreshold} onChange={(e) => setLowStockThreshold(parseInt(e.target.value, 10))} required />
-          </div>
-
-          <Input label="Short Subtitle" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} placeholder="Short subtitle for luxury cards" />
-
-          <div className="space-y-1.5 text-left">
-            <label className="text-xs uppercase tracking-widest text-luxury-muted font-medium">Formulation Details & Ingredients</label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detailed ingredients and usage guide"
-              className="w-full bg-luxury-offblack text-luxury-white placeholder-luxury-darkmuted border border-luxury-border p-3 text-xs outline-none focus:border-luxury-gold"
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-6 pt-2">
-            <label className="flex items-center space-x-2 text-xs text-luxury-white cursor-pointer">
-              <input type="checkbox" checked={isSessionProduct} onChange={(e) => setIsSessionProduct(e.target.checked)} className="accent-[#D4AF37]" />
-              <span>Available as In-Session Add-on</span>
-            </label>
-            <label className="flex items-center space-x-2 text-xs text-luxury-white cursor-pointer">
-              <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="accent-[#D4AF37]" />
-              <span>Featured on Homepage</span>
-            </label>
-            <label className="flex items-center space-x-2 text-xs text-luxury-white cursor-pointer">
-              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} className="accent-[#D4AF37]" />
-              <span>Active in Store</span>
-            </label>
-          </div>
-
-          <div className="pt-4 border-t border-luxury-border flex justify-end space-x-3">
-            <Button variant="ghost" size="sm" type="button" onClick={() => setModalOpen(false)}>Cancel</Button>
-            <Button variant="gold" size="md" type="submit" isLoading={saving}>Save Formulation</Button>
+          {/* Fixed Footer Action Buttons */}
+          <div className="pt-4 border-t border-luxury-border flex justify-end space-x-3 sticky bottom-0 bg-luxury-card py-2">
+            <Button variant="ghost" size="sm" type="button" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="gold" size="md" type="submit" isLoading={saving}>
+              Save Formulation
+            </Button>
           </div>
         </form>
       </Modal>
