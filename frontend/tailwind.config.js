@@ -9,23 +9,23 @@ export default {
     extend: {
       colors: {
         luxury: {
-          black: '#111111',
-          offblack: '#161616',
-          charcoal: '#1E1E1E',
-          card: '#222222',
-          border: '#2E2E2E',
+          black: 'var(--luxury-black)',
+          offblack: 'var(--luxury-offblack)',
+          charcoal: 'var(--luxury-charcoal)',
+          card: 'var(--luxury-card)',
+          border: 'var(--luxury-border)',
           gold: {
-            DEFAULT: '#D4AF37',
-            light: '#E5C158',
-            dark: '#AA8820',
-            muted: 'rgba(212, 175, 55, 0.15)',
-            glow: 'rgba(212, 175, 55, 0.25)',
+            DEFAULT: 'var(--luxury-gold)',
+            light: 'var(--luxury-gold-light)',
+            dark: 'var(--luxury-gold-dark)',
+            muted: 'var(--luxury-gold-muted)',
+            glow: 'var(--luxury-gold-glow)',
           },
-          white: '#FFFFFF',
-          cream: '#F9F8F6',
-          sand: '#EFECE6',
-          muted: '#8E8E93',
-          darkmuted: '#555555'
+          white: 'var(--luxury-white)',
+          cream: 'var(--luxury-cream)',
+          sand: 'var(--luxury-sand)',
+          muted: 'var(--luxury-muted)',
+          darkmuted: 'var(--luxury-darkmuted)'
         }
       },
       fontFamily: {
@@ -37,7 +37,7 @@ export default {
         'gold-subtle': '0 4px 20px -2px rgba(212, 175, 55, 0.15)',
         'gold-glow': '0 0 30px rgba(212, 175, 55, 0.3)',
         'luxury-dark': '0 20px 40px -15px rgba(0, 0, 0, 0.7)',
-        'luxury-card': '0 10px 30px -5px rgba(0, 0, 0, 0.5)',
+        'luxury-card': '0 10px 30px -5px rgba(0, 0, 0, 0.3)',
       },
       letterSpacing: {
         'widest-luxury': '0.25em',

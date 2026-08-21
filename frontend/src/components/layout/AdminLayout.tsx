@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { AgamosLogo } from '../brand/AgamosLogo';
 import { useAuth } from '../../context/AuthContext';
+import { ThemeSelector } from '../ui/ThemeSelector';
 
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -110,6 +111,10 @@ export const AdminLayout: React.FC = () => {
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-luxury-border bg-luxury-card/40 space-y-2">
+          <div className="flex items-center justify-between px-2 py-1">
+            <span className="text-[10px] uppercase tracking-widest text-luxury-muted">Theme:</span>
+            <ThemeSelector compact />
+          </div>
           <Link
             to="/"
             target="_blank"
@@ -139,7 +144,7 @@ export const AdminLayout: React.FC = () => {
             <Menu className="w-6 h-6" />
           </button>
           <AgamosLogo variant="wordmark" />
-          <div className="w-6" />
+          <ThemeSelector compact />
         </header>
 
         <main className="flex-1 p-6 sm:p-8 lg:p-10 max-w-7xl mx-auto w-full">

@@ -3,19 +3,103 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --color-gold: #D4AF37;
-    --color-black: #111111;
+  /* Default: Haute Noir */
+  :root,
+  .theme-noir {
+    --luxury-black: #111111;
+    --luxury-offblack: #161616;
+    --luxury-charcoal: #1E1E1E;
+    --luxury-card: #1C1C1C;
+    --luxury-border: #2E2E2E;
+    --luxury-gold: #D4AF37;
+    --luxury-gold-light: #E5C158;
+    --luxury-gold-dark: #AA8820;
+    --luxury-gold-muted: rgba(212, 175, 55, 0.15);
+    --luxury-gold-glow: rgba(212, 175, 55, 0.25);
+    --luxury-white: #FFFFFF;
+    --luxury-cream: #F9F8F6;
+    --luxury-sand: #EFECE6;
+    --luxury-muted: #8E8E93;
+    --luxury-darkmuted: #555555;
+    --scrollbar-track: #111111;
+    --scrollbar-thumb: #2A2A2A;
+  }
+
+  /* Champagne Pearl (Luminous Light Mode) */
+  .theme-champagne {
+    --luxury-black: #FAF8F5;
+    --luxury-offblack: #F1ECE5;
+    --luxury-charcoal: #E7E1D8;
+    --luxury-card: #FFFFFF;
+    --luxury-border: #DDD5C9;
+    --luxury-gold: #B88E28;
+    --luxury-gold-light: #CBA23D;
+    --luxury-gold-dark: #8F6B13;
+    --luxury-gold-muted: rgba(184, 142, 40, 0.12);
+    --luxury-gold-glow: rgba(184, 142, 40, 0.2);
+    --luxury-white: #141414;
+    --luxury-cream: #1F1F1F;
+    --luxury-sand: #333333;
+    --luxury-muted: #5C5852;
+    --luxury-darkmuted: #8C867C;
+    --scrollbar-track: #FAF8F5;
+    --scrollbar-thumb: #DDD5C9;
+  }
+
+  /* Imperial Emerald */
+  .theme-emerald {
+    --luxury-black: #081711;
+    --luxury-offblack: #0D2119;
+    --luxury-charcoal: #132C22;
+    --luxury-card: #0F251C;
+    --luxury-border: #1B3D2F;
+    --luxury-gold: #D4AF37;
+    --luxury-gold-light: #E5C158;
+    --luxury-gold-dark: #AA8820;
+    --luxury-gold-muted: rgba(212, 175, 55, 0.18);
+    --luxury-gold-glow: rgba(212, 175, 55, 0.3);
+    --luxury-white: #F4FAF7;
+    --luxury-cream: #E6F3EC;
+    --luxury-sand: #C9E2D5;
+    --luxury-muted: #8AA79A;
+    --luxury-darkmuted: #567366;
+    --scrollbar-track: #081711;
+    --scrollbar-thumb: #1B3D2F;
+  }
+
+  /* Royal Velvet / Rose Gold */
+  .theme-velvet {
+    --luxury-black: #140810;
+    --luxury-offblack: #1C0D17;
+    --luxury-charcoal: #261320;
+    --luxury-card: #200E1B;
+    --luxury-border: #3A1B30;
+    --luxury-gold: #E2A79B;
+    --luxury-gold-light: #F0C4BB;
+    --luxury-gold-dark: #C68173;
+    --luxury-gold-muted: rgba(226, 167, 155, 0.18);
+    --luxury-gold-glow: rgba(226, 167, 155, 0.3);
+    --luxury-white: #FDF7F8;
+    --luxury-cream: #F8EDEF;
+    --luxury-sand: #EAD3D7;
+    --luxury-muted: #AB8F96;
+    --luxury-darkmuted: #785E65;
+    --scrollbar-track: #140810;
+    --scrollbar-thumb: #3A1B30;
   }
 
   body {
-    @apply bg-luxury-black text-luxury-white font-sans antialiased selection:bg-luxury-gold selection:text-luxury-black;
+    background-color: var(--luxury-black);
+    color: var(--luxury-white);
+    font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    font-family: 'Playfair Display', Didot, Cinzel, Georgia, serif;
   }
 
   /* Custom Luxury Scrollbar */
@@ -25,16 +109,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #111111;
+    background: var(--scrollbar-track);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #2A2A2A;
+    background: var(--scrollbar-thumb);
     border-radius: 0px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #D4AF37;
+    background: var(--luxury-gold);
   }
 }
 

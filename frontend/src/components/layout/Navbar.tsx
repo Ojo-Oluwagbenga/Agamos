@@ -5,6 +5,7 @@ import { AgamosLogo } from '../brand/AgamosLogo';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { Button } from '../ui/Button';
+import { ThemeSelector } from '../ui/ThemeSelector';
 
 export const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -76,7 +77,10 @@ export const Navbar: React.FC = () => {
             </nav>
 
             {/* Right Action Icons & CTAs */}
-            <div className="flex items-center space-x-3 sm:space-x-5">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {/* Luxury Atmosphere / Theme Selector */}
+              <ThemeSelector />
+
               {/* Admin Portal Shortcut if user is staff/admin */}
               {isAdmin && (
                 <Link

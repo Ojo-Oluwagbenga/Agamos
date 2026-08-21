@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Layouts & Nav
 import { Navbar } from './components/layout/Navbar';
@@ -69,92 +70,94 @@ const PublicLayout: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <ToastProvider>
-        <AuthProvider>
-          <CartProvider>
-            <Routes>
-              {/* Public Website Routes */}
-              <Route element={<PublicLayout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/services" element={<ServicesPage />} />
-                <Route path="/services/:slug" element={<ServiceDetailPage />} />
-                <Route path="/book" element={<BookingPage />} />
-                <Route path="/booking/:id" element={<BookingConfirmationPage />} />
-                <Route path="/booking/verify" element={<BookingConfirmationPage />} />
-                <Route path="/shop" element={<ShopPage />} />
-                <Route path="/shop/:slug" element={<ProductDetailPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/order/:id" element={<OrderConfirmationPage />} />
-                <Route path="/order/verify" element={<OrderConfirmationPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/contact" element={<ContactPage />} />
-                <Route path="/faq" element={<FaqPage />} />
-                <Route path="/terms" element={<TermsPage />} />
-                <Route path="/privacy" element={<PrivacyPage />} />
-              </Route>
+      <ThemeProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Routes>
+                {/* Public Website Routes */}
+                <Route element={<PublicLayout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/services" element={<ServicesPage />} />
+                  <Route path="/services/:slug" element={<ServiceDetailPage />} />
+                  <Route path="/book" element={<BookingPage />} />
+                  <Route path="/booking/:id" element={<BookingConfirmationPage />} />
+                  <Route path="/booking/verify" element={<BookingConfirmationPage />} />
+                  <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/shop/:slug" element={<ProductDetailPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/order/:id" element={<OrderConfirmationPage />} />
+                  <Route path="/order/verify" element={<OrderConfirmationPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/faq" element={<FaqPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
+                </Route>
 
-              {/* Mock Paystack Simulator */}
-              <Route path="/mock-paystack" element={<MockPaystackPage />} />
+                {/* Mock Paystack Simulator */}
+                <Route path="/mock-paystack" element={<MockPaystackPage />} />
 
-              {/* Authentication Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                {/* Authentication Routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-              {/* Customer Sanctuary Portal */}
-              <Route
-                path="/account"
-                element={
-                  <ProtectedRoute>
-                    <CustomerLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<CustomerDashboardPage />} />
-                <Route path="bookings" element={<MyBookingsPage />} />
-                <Route path="orders" element={<MyOrdersPage />} />
-                <Route path="profile" element={<ProfilePage />} />
-              </Route>
-
-              {/* Administrator Portal */}
-              <Route
-                path="/admin"
-                element={
-                  <AdminRoute>
-                    <AdminLayout />
-                  </AdminRoute>
-                }
-              >
-                <Route index element={<AdminDashboardPage />} />
-                <Route path="bookings" element={<AdminBookingsPage />} />
-                <Route path="scanner" element={<AdminScannerPage />} />
-                <Route path="services" element={<AdminServicesPage />} />
-                <Route path="availability" element={<AdminAvailabilityPage />} />
-                <Route path="products" element={<AdminProductsPage />} />
-                <Route path="inventory" element={<AdminInventoryPage />} />
-                <Route path="orders" element={<AdminOrdersPage />} />
-                <Route path="settings" element={<AdminSettingsPage />} />
-              </Route>
-
-              {/* 404 Fallback */}
-              <Route path="*" element={<PublicLayout />}>
+                {/* Customer Sanctuary Portal */}
                 <Route
-                  path="*"
+                  path="/account"
                   element={
-                    <div className="pt-36 pb-24 text-center px-4">
-                      <h1 className="font-serif text-5xl mb-3">404</h1>
-                      <p className="text-xs uppercase tracking-widest text-luxury-muted">
-                        Sanctuary page not found
-                      </p>
-                    </div>
+                    <ProtectedRoute>
+                      <CustomerLayout />
+                    </ProtectedRoute>
                   }
-                />
-              </Route>
-            </Routes>
-          </CartProvider>
-        </AuthProvider>
-      </ToastProvider>
+                >
+                  <Route index element={<CustomerDashboardPage />} />
+                  <Route path="bookings" element={<MyBookingsPage />} />
+                  <Route path="orders" element={<MyOrdersPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
+                </Route>
+
+                {/* Administrator Portal */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminLayout />
+                    </AdminRoute>
+                  }
+                >
+                  <Route index element={<AdminDashboardPage />} />
+                  <Route path="bookings" element={<AdminBookingsPage />} />
+                  <Route path="scanner" element={<AdminScannerPage />} />
+                  <Route path="services" element={<AdminServicesPage />} />
+                  <Route path="availability" element={<AdminAvailabilityPage />} />
+                  <Route path="products" element={<AdminProductsPage />} />
+                  <Route path="inventory" element={<AdminInventoryPage />} />
+                  <Route path="orders" element={<AdminOrdersPage />} />
+                  <Route path="settings" element={<AdminSettingsPage />} />
+                </Route>
+
+                {/* 404 Fallback */}
+                <Route path="*" element={<PublicLayout />}>
+                  <Route
+                    path="*"
+                    element={
+                      <div className="pt-36 pb-24 text-center px-4">
+                        <h1 className="font-serif text-5xl mb-3">404</h1>
+                        <p className="text-xs uppercase tracking-widest text-luxury-muted">
+                          Sanctuary page not found
+                        </p>
+                      </div>
+                    }
+                  />
+                </Route>
+              </Routes>
+            </CartProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 };
