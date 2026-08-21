@@ -107,7 +107,9 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
     )
 
     try:
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'AGAMOS <concierge@agamos.com>')
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'AGAMOS Luxury Concierge <concierge@agamos.com>')
+        print(f"[EMAIL DISPATCH] Attempting to send {email_type} email to {recipient_email} from {from_email}...")
+        
         send_mail(
             subject=subject,
             message=subject,  # Plain text fallback
@@ -119,10 +121,12 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
         log_entry.status = EmailNotificationLog.Status.SENT
         log_entry.sent_at = timezone.now()
         log_entry.save()
+        print(f"[EMAIL SUCCESS] {email_type} email sent successfully to {recipient_email}.")
     except Exception as e:
         log_entry.status = EmailNotificationLog.Status.FAILED
         log_entry.error_message = str(e)
         log_entry.save()
+        print(f"[EMAIL FAILED] Failed to send {email_type} to {recipient_email}. Error: {str(e)}")
 
 
 def dispatch_24h_appointment_reminders():

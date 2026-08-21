@@ -180,14 +180,27 @@ CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_TIMEZONE = TIME_ZONE
 
-# Email Backend
+# Email Backend Configuration
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.net')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'AGAMOS Luxury Concierge <concierge@agamos.com>')
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', 15))
+
+# SSL vs TLS Detection (Port 465 uses SSL, Port 587 uses TLS)
+if EMAIL_PORT == 465 or os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1'):
+    EMAIL_USE_SSL = True
+    EMAIL_USE_TLS = False
+else:
+    EMAIL_USE_SSL = False
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1')
+
+# Default From Email: fallback to EMAIL_HOST_USER if configured and not custom
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '') or (
+    f"AGAMOS Luxury Concierge <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER and '@' in EMAIL_HOST_USER
+    else 'AGAMOS Luxury Concierge <concierge@agamos.com>'
+)
 
 # Public Frontend URL for Email Links
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://agamos.vercel.app')
