@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { formatNGN } from '../../utils/formatters';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import { Button } from '../ui/Button';
 
 export const CartDrawer: React.FC = () => {
@@ -55,7 +56,7 @@ export const CartDrawer: React.FC = () => {
               </div>
             ) : (
               items.map((item) => {
-                const primaryImage = item.product.images?.find((img) => img.is_primary)?.image || item.product.images?.[0]?.image || '/agamos-symbol.svg';
+                const primaryImage = getProductImageUrl(item.product);
 
                 return (
                   <div key={item.product.id} className="pt-6 first:pt-0 flex space-x-4">
@@ -66,7 +67,7 @@ export const CartDrawer: React.FC = () => {
                         alt={item.product.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.svg');
+                          (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.png');
                         }}
                       />
                     </div>

@@ -3,6 +3,7 @@ import { Plus, Edit2, Package, Search, Sparkles, Image as ImageIcon, Upload, Tra
 import { api } from '../../services/api';
 import { Product, ProductCategory } from '../../types';
 import { formatNGN } from '../../utils/formatters';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
@@ -90,7 +91,7 @@ export const AdminProductsPage: React.FC = () => {
     setShortDescription(p.short_description || '');
     setDescription(p.description || '');
     
-    const existingImg = p.images?.find((img) => img.is_primary)?.image || p.images?.[0]?.image || '';
+    const existingImg = getProductImageUrl(p, '');
     setImageUrl(existingImg);
     setImageFile(null);
     setImagePreview(existingImg || null);
@@ -196,7 +197,7 @@ export const AdminProductsPage: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-luxury-border/60">
               {products.map((p) => {
-                const prodImg = p.images?.find((img) => img.is_primary)?.image || p.images?.[0]?.image;
+                const prodImg = getProductImageUrl(p, '');
                 return (
                   <tr key={p.id} className="hover:bg-luxury-offblack/40 transition-colors">
                     <td className="py-3.5 px-4">

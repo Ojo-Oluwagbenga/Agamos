@@ -4,6 +4,7 @@ import { ShoppingBag, ChevronLeft, Check, Plus, Minus, ShieldCheck, Sparkles, Al
 import { api } from '../../services/api';
 import { Product } from '../../types';
 import { formatNGN } from '../../utils/formatters';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import { Button } from '../../components/ui/Button';
 import { useCart } from '../../context/CartContext';
 
@@ -22,7 +23,7 @@ export const ProductDetailPage: React.FC = () => {
       try {
         const data = await api.products.getBySlug(slug);
         setProduct(data);
-        const primary = data.images?.find((img) => img.is_primary)?.image || data.images?.[0]?.image || '/agamos-symbol.svg';
+        const primary = getProductImageUrl(data);
         setSelectedImage(primary);
       } catch (err) {
         console.error('Failed to load product detail', err);
@@ -78,7 +79,7 @@ export const ProductDetailPage: React.FC = () => {
                 alt={product.name}
                 className="w-full h-full object-contain"
                 onError={(e) => {
-                  (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.svg');
+                  (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.png');
                 }}
               />
               <div className="absolute top-4 left-4 bg-luxury-black/90 px-3 py-1 text-[10px] uppercase tracking-widest text-luxury-gold border border-luxury-gold/30">

@@ -4,6 +4,7 @@ import { Calendar as CalendarIcon, Clock, Sparkles, ShoppingBag, User, Check, Ar
 import { api } from '../../services/api';
 import { Service, ServiceCategory, AvailabilityResult, TimeSlot, Product } from '../../types';
 import { formatNGN } from '../../utils/formatters';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Button } from '../../components/ui/Button';
@@ -414,11 +415,11 @@ export const BookingPage: React.FC = () => {
                   >
                     <div className="w-16 h-16 bg-luxury-offblack border border-luxury-border flex-shrink-0 flex items-center justify-center p-2">
                       <img
-                        src={prod.images?.[0]?.image || '/agamos-symbol.svg'}
+                        src={getProductImageUrl(prod)}
                         alt={prod.name}
                         className="w-full h-full object-contain"
                         onError={(e) => {
-                          (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.svg');
+                          (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.png');
                         }}
                       />
                     </div>

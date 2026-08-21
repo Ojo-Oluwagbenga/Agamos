@@ -4,6 +4,7 @@ import { ArrowRight, Calendar, ShoppingBag, Sparkles, Star, ShieldCheck, Clock, 
 import { api } from '../../services/api';
 import { Service, Product, SiteSetting, Testimonial } from '../../types';
 import { formatNGN } from '../../utils/formatters';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import { Button } from '../../components/ui/Button';
 import { useCart } from '../../context/CartContext';
 
@@ -260,7 +261,7 @@ export const HomePage: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {products.map((product) => {
-            const primaryImage = product.images?.[0]?.image || '/agamos-symbol.svg';
+            const primaryImage = getProductImageUrl(product);
 
             return (
               <div
@@ -274,7 +275,7 @@ export const HomePage: React.FC = () => {
                     alt={product.name}
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                     onError={(e) => {
-                      (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.svg');
+                      (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.png');
                     }}
                   />
                   <div className="absolute top-4 left-4 bg-luxury-black/90 px-2.5 py-1 text-[9px] uppercase tracking-widest text-luxury-gold border border-luxury-gold/30">

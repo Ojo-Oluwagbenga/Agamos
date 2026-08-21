@@ -10,9 +10,26 @@ class ProductCategorySerializer(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
         fields = ['id', 'image', 'alt_text', 'is_primary', 'display_order']
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+        img_str = str(obj.image)
+        if img_str.startswith(('http://', 'https://', 'data:')):
+            return img_str
+        try:
+            url = obj.image.url
+            request = self.context.get('request')
+            if request and not url.startswith(('http://', 'https://')):
+                return request.build_absolute_uri(url)
+            return url
+        except Exception:
+            return img_str
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -38,12 +55,19 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_primary_image(self, obj):
         primary = obj.images.filter(is_primary=True).first() or obj.images.first()
-        if primary and primary.image:
-            try:
-                return primary.image.url
-            except Exception:
-                return str(primary.image)
-        return None
+        if not primary or not primary.image:
+            return None
+        img_str = str(primary.image)
+        if img_str.startswith(('http://', 'https://', 'data:')):
+            return img_str
+        try:
+            url = primary.image.url
+            request = self.context.get('request')
+            if request and not url.startswith(('http://', 'https://')):
+                return request.build_absolute_uri(url)
+            return url
+        except Exception:
+            return img_str
 
     def create(self, validated_data):
         image_url = validated_data.pop('image_url', None)

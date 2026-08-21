@@ -4,6 +4,7 @@ import { Search, ShoppingBag, Filter, ArrowRight, Sparkles } from 'lucide-react'
 import { api } from '../../services/api';
 import { Product, ProductCategory } from '../../types';
 import { formatNGN } from '../../utils/formatters';
+import { getProductImageUrl } from '../../utils/imageHelper';
 import { Button } from '../../components/ui/Button';
 import { useCart } from '../../context/CartContext';
 
@@ -117,7 +118,7 @@ export const ShopPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {products.map((product) => {
-              const primaryImage = product.images?.[0]?.image || '/agamos-symbol.svg';
+              const primaryImage = getProductImageUrl(product);
 
               return (
                 <div
@@ -125,13 +126,13 @@ export const ShopPage: React.FC = () => {
                   className="group bg-luxury-card border border-luxury-border flex flex-col justify-between transition-all duration-300 hover:border-luxury-gold/60 hover:shadow-2xl overflow-hidden"
                 >
                   {/* Image Container */}
-                  <div className="relative aspect-square bg-luxury-offblack overflow-hidden flex items-center justify-center p-8">
+                  <div className="relative aspect-square bg-luxury-offblack overflow-hidden flex items-center justify-center p-6">
                     <img
                       src={primaryImage}
                       alt={product.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                       onError={(e) => {
-                        (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.svg');
+                        (e.target as HTMLElement).setAttribute('src', '/agamos-symbol.png');
                       }}
                     />
                     <div className="absolute top-4 left-4 bg-luxury-black/90 px-2.5 py-1 text-[9px] uppercase tracking-widest text-luxury-gold border border-luxury-gold/30">
