@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Shield, Heart, Award, ArrowRight } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { AgamosLogo } from '../../components/brand/AgamosLogo';
 
 export const AboutPage: React.FC = () => {
   return (
@@ -66,11 +67,13 @@ export const AboutPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-luxury-card border border-luxury-gold/40 aspect-[4/3] flex items-center justify-center p-8 text-center">
-            <div className="space-y-3">
-              <Sparkles className="w-10 h-10 text-luxury-gold mx-auto" />
-              <h4 className="font-serif text-xl text-luxury-white">AGAMOS LUXURY</h4>
-              <p className="text-[11px] text-luxury-muted">12A Victoria Island Luxury Boulevard, Lagos</p>
+          <div className="bg-luxury-card border border-luxury-gold/40 aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden">
+            <div className="space-y-4 flex flex-col items-center">
+              <AgamosLogo variant="circle-emblem" linkToHome={false} />
+              <div>
+                <h4 className="font-serif text-xl text-luxury-white tracking-wider">AGAMOS</h4>
+                <p className="text-[10px] uppercase tracking-widest text-luxury-gold mt-1">Flagship Suite · Victoria Island</p>
+              </div>
             </div>
           </div>
         </div>
