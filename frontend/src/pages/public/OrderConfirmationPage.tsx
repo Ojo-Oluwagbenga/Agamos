@@ -19,23 +19,29 @@ export const OrderConfirmationPage: React.FC = () => {
 
   useEffect(() => {
     const loadOrder = async () => {
-      if (!reference) {
+      const initialRef = referenceParam || searchParams.get('reference') || searchParams.get('trxref');
+      if (!initialRef) {
         setErrorMsg('No order reference provided.');
         setLoading(false);
         return;
       }
 
       try {
+        let orderRefToFetch = initialRef;
         const trxRef = searchParams.get('reference') || searchParams.get('trxref');
-        if (trxRef && !referenceParam) {
+
+        if (trxRef) {
           try {
-            await api.payments.verify(trxRef);
+            const verifyRes = await api.payments.verify(trxRef);
+            if (verifyRes?.order_reference) {
+              orderRefToFetch = verifyRes.order_reference;
+            }
           } catch (e) {
-            console.warn('Payment verify verification pinged', e);
+            console.warn('Payment verify verification error:', e);
           }
         }
 
-        const data = await api.orders.getByRef(reference);
+        const data = await api.orders.getByRef(orderRefToFetch);
         setOrder(data);
 
         confetti({
@@ -52,7 +58,7 @@ export const OrderConfirmationPage: React.FC = () => {
     };
 
     loadOrder();
-  }, [reference, referenceParam, searchParams]);
+  }, [referenceParam, searchParams]);
 
   if (loading) {
     return (

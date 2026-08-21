@@ -124,7 +124,14 @@ class OrderDetailByRefView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, reference):
-        order = get_object_or_404(Order.objects.prefetch_related('items__product'), order_reference=reference)
+        from django.db.models import Q
+        order = Order.objects.prefetch_related('items__product').filter(
+            Q(order_reference=reference) | Q(payments__reference=reference) | Q(payments__paystack_reference=reference)
+        ).first()
+
+        if not order:
+            return Response({'error': 'No order found matching the provided reference.'}, status=status.HTTP_404_NOT_FOUND)
+
         serializer = OrderDetailSerializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

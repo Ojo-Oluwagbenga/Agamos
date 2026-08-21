@@ -16,7 +16,28 @@ class VerifyPaymentView(views.APIView):
     def get(self, request, reference):
         payment_tx = PaymentTransaction.objects.filter(reference=reference).first()
         if not payment_tx:
+            # Also check by paystack_reference
+            payment_tx = PaymentTransaction.objects.filter(paystack_reference=reference).first()
+
+        if not payment_tx:
             return Response({'error': 'Payment transaction reference not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # If already verified as success (e.g. by Paystack webhook)
+        if payment_tx.status == PaymentTransaction.Status.SUCCESS:
+            if payment_tx.payment_type == PaymentTransaction.PaymentType.BOOKING and payment_tx.booking:
+                return Response({
+                    'status': 'success',
+                    'payment_type': 'BOOKING',
+                    'booking_reference': payment_tx.booking.booking_reference,
+                    'message': 'Booking payment verified successfully.'
+                })
+            elif payment_tx.payment_type == PaymentTransaction.PaymentType.ORDER and payment_tx.order:
+                return Response({
+                    'status': 'success',
+                    'payment_type': 'ORDER',
+                    'order_reference': payment_tx.order.order_reference,
+                    'message': 'Order payment verified successfully.'
+                })
 
         # Call Paystack verification
         result = verify_paystack_transaction(reference)

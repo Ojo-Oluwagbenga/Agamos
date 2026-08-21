@@ -65,10 +65,14 @@ class BookingDetailByRefView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, reference):
-        booking = get_object_or_404(
-            Booking.objects.select_related('service', 'service__category', 'qr_code').prefetch_related('session_products__product'),
-            booking_reference=reference
-        )
+        from django.db.models import Q
+        booking = Booking.objects.select_related('service', 'service__category', 'qr_code').prefetch_related('session_products__product').filter(
+            Q(booking_reference=reference) | Q(payments__reference=reference) | Q(payments__paystack_reference=reference)
+        ).first()
+
+        if not booking:
+            return Response({'error': 'No booking found matching the provided reference.'}, status=status.HTTP_404_NOT_FOUND)
+
         # Verify guest access or user ownership
         if request.user.is_authenticated and not request.user.is_staff:
             if booking.user and booking.user != request.user and booking.guest_email.lower() != request.user.email.lower():

@@ -19,24 +19,30 @@ export const BookingConfirmationPage: React.FC = () => {
 
   useEffect(() => {
     const loadBooking = async () => {
-      if (!reference) {
+      const initialRef = referenceParam || searchParams.get('reference') || searchParams.get('trxref');
+      if (!initialRef) {
         setErrorMsg('No booking reference provided.');
         setLoading(false);
         return;
       }
 
       try {
-        // If query param indicates Paystack redirect verification
+        let bookingRefToFetch = initialRef;
         const trxRef = searchParams.get('reference') || searchParams.get('trxref');
-        if (trxRef && !referenceParam) {
+
+        // If query param indicates Paystack redirect callback
+        if (trxRef) {
           try {
-            await api.payments.verify(trxRef);
+            const verifyRes = await api.payments.verify(trxRef);
+            if (verifyRes?.booking_reference) {
+              bookingRefToFetch = verifyRes.booking_reference;
+            }
           } catch (e) {
-            console.warn('Payment verify verification pinged', e);
+            console.warn('Payment verify verification error:', e);
           }
         }
 
-        const data = await api.bookings.getByRef(reference);
+        const data = await api.bookings.getByRef(bookingRefToFetch);
         setBooking(data);
 
         // Fire luxury gold confetti
@@ -54,7 +60,7 @@ export const BookingConfirmationPage: React.FC = () => {
     };
 
     loadBooking();
-  }, [reference, referenceParam, searchParams]);
+  }, [referenceParam, searchParams]);
 
   if (loading) {
     return (
