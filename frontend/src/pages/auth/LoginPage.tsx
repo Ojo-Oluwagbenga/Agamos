@@ -155,7 +155,7 @@ export const LoginPage: React.FC = () => {
             <Input
               label="Email Address"
               type="email"
-              placeholder="e.g. admin@agamos.com or client@agamos.com"
+              placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -191,13 +191,6 @@ export const LoginPage: React.FC = () => {
               Sign In
             </Button>
           </form>
-
-          {/* Seed demo quick logins */}
-          <div className="p-3 bg-luxury-offblack border border-luxury-border/60 text-[11px] text-luxury-muted space-y-1">
-            <p className="font-semibold text-luxury-gold">Demo Accounts Available:</p>
-            <p>&bull; <strong>Admin:</strong> admin@agamos.com / AgamosLuxury2026!</p>
-            <p>&bull; <strong>Client:</strong> client@agamos.com / AgamosLuxury2026!</p>
-          </div>
         </div>
 
         {/* Register Link */}
