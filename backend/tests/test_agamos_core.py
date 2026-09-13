@@ -197,3 +197,79 @@ class AgamosCoreWorkflowTests(TestCase):
         }
         with self.assertRaises(ValidationError):
             create_order_checkout(oversell_data)
+
+    def test_skip_payment_order_checkout(self):
+        """Test that with SKIP_PAYMENT=True, orders are directly confirmed and confirmation email dispatched."""
+        from apps.notifications.models import EmailNotificationLog
+        order_payload = {
+            'guest_name': 'Amara Okonkwo',
+            'guest_email': 'amara@example.com',
+            'guest_phone': '+2348011223344',
+            'delivery_type': 'PICKUP',
+            'items': [
+                {'product_id': self.product.id, 'quantity': 2}
+            ]
+        }
+        initial_stock = self.product.stock_quantity
+        response = self.client.post('/api/orders/checkout/', data=order_payload, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+
+        # Payment should be skipped
+        self.assertTrue(data['payment']['skipped'])
+        self.assertIsNone(data['payment']['authorization_url'])
+
+        # Order should be marked paid & confirmed
+        self.assertEqual(data['order']['status'], 'PAID')
+        self.assertEqual(data['order']['payment_status'], 'PAID')
+
+        # Stock should be decremented by 2
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock_quantity, initial_stock - 2)
+
+        # Email should be logged and sent
+        email_log = EmailNotificationLog.objects.filter(
+            recipient_email='amara@example.com',
+            email_type='ORDER_CONFIRMATION'
+        ).first()
+        self.assertIsNotNone(email_log)
+        self.assertEqual(email_log.status, EmailNotificationLog.Status.SENT)
+
+    def test_skip_payment_booking_initiate(self):
+        """Test that with SKIP_PAYMENT=True, bookings are directly confirmed with QR code and email dispatched."""
+        from apps.notifications.models import EmailNotificationLog
+        booking_payload = {
+            'service_id': self.service.id,
+            'booking_date': (date.today() + timedelta(days=3)).isoformat(),
+            'start_time': '10:00',
+            'guest_name': 'Khadijah Bello',
+            'guest_email': 'khadijah@example.com',
+            'guest_phone': '+2348099887766',
+            'customer_notes': 'Luxury treatment prep',
+            'session_products': []
+        }
+        response = self.client.post('/api/bookings/initiate/', data=booking_payload, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+
+        # Payment should be skipped
+        self.assertTrue(data['payment']['skipped'])
+        self.assertIsNone(data['payment']['authorization_url'])
+
+        # Booking should be confirmed and paid
+        self.assertEqual(data['booking']['status'], 'CONFIRMED')
+        self.assertEqual(data['booking']['payment_status'], 'PAID')
+
+        # Booking QR code must exist
+        booking_ref = data['booking']['booking_reference']
+        booking_obj = Booking.objects.get(booking_reference=booking_ref)
+        self.assertTrue(hasattr(booking_obj, 'qr_code'))
+
+        # Email should be logged and sent
+        email_log = EmailNotificationLog.objects.filter(
+            recipient_email='khadijah@example.com',
+            email_type='BOOKING_CONFIRMATION'
+        ).first()
+        self.assertIsNotNone(email_log)
+        self.assertEqual(email_log.status, EmailNotificationLog.Status.SENT)
+

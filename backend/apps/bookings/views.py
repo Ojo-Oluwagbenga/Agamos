@@ -3,9 +3,11 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.utils import timezone
 from .models import Booking
 from .serializers import BookingInitiateSerializer, BookingDetailSerializer
-from .services import create_booking_reservation
+from .services import create_booking_reservation, finalize_booking_payment
+from apps.payments.models import PaymentTransaction
 from apps.payments.paystack import initialize_paystack_payment
 
 class InitiateBookingView(views.APIView):
@@ -27,6 +29,31 @@ class InitiateBookingView(views.APIView):
             return Response({'error': msg}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': f'Failed to process booking reservation: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Check if payment should be bypassed
+        skip_payment = getattr(settings, 'SKIP_PAYMENT', True)
+        if skip_payment:
+            payment_tx.status = PaymentTransaction.Status.SUCCESS
+            payment_tx.verified_at = timezone.now()
+            payment_tx.paystack_reference = 'SKIPPED_PAYMENT'
+            payment_tx.paystack_response_data = {'skipped': True, 'reason': 'Direct appointment booking with payment bypassed.'}
+            payment_tx.save()
+
+            finalize_booking_payment(booking, paystack_ref='SKIPPED_PAYMENT')
+            booking.refresh_from_db()
+
+            booking_data = BookingDetailSerializer(booking).data
+            return Response({
+                'booking': booking_data,
+                'payment': {
+                    'reference': payment_tx.reference,
+                    'amount': str(payment_tx.amount),
+                    'authorization_url': None,
+                    'access_code': None,
+                    'skipped': True,
+                    'paystack_public_key': getattr(settings, 'PAYSTACK_PUBLIC_KEY', '') if hasattr(self, 'settings') else 'pk_test_dummy'
+                }
+            }, status=status.HTTP_201_CREATED)
 
         # Initialize Paystack Payment Transaction
         paystack_result = initialize_paystack_payment(

@@ -64,13 +64,38 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
 
     elif email_type == 'ORDER_CONFIRMATION':
         order_ref = context_data.get('order_reference')
+        items = context_data.get('items', [])
+        items_table = ""
+        if items:
+            items_rows = "".join([
+                f"""<tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #2E2E2E; color: #E5E5E5; font-size: 12px;">{item.get('name')} &times; {item.get('quantity')}</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #2E2E2E; text-align: right; color: #D4AF37; font-size: 12px; font-weight: 600;">{item.get('subtotal')}</td>
+                </tr>"""
+                for item in items
+            ])
+            items_table = f"""
+            <table width="100%" style="border-collapse: collapse; margin: 15px 0;">
+                <thead>
+                    <tr style="color: #888888; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">
+                        <th style="text-align: left; padding-bottom: 8px;">Product</th>
+                        <th style="text-align: right; padding-bottom: 8px;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items_rows}
+                </tbody>
+            </table>
+            """
+
         body_html = f"""
         <p>Thank you for shopping at the AGAMOS Beauty Store. Your order has been placed and confirmed.</p>
         <div style="background-color: #202020; border-left: 3px solid #D4AF37; padding: 20px; margin: 25px 0;">
             <p style="margin: 0 0 10px 0; color: #D4AF37; font-weight: 600; font-size: 15px;">ORDER SUMMARY</p>
             <p style="margin: 4px 0;"><strong>Order Reference:</strong> {order_ref}</p>
             <p style="margin: 4px 0;"><strong>Delivery Method:</strong> {context_data.get('delivery_type')}</p>
-            <p style="margin: 4px 0;"><strong>Total Paid:</strong> {context_data.get('total_amount')}</p>
+            <p style="margin: 4px 0;"><strong>Total Amount:</strong> {context_data.get('total_amount')}</p>
+            {items_table}
         </div>
         <p style="font-size: 13px; color: #AAAAAA;">
             Our logistics team is preparing your bespoke packaging. You will be notified once ready for pickup or dispatched with courier.
@@ -106,13 +131,17 @@ def send_transactional_email_task(email_type: str, recipient_email: str, recipie
         cta_text=cta_text
     )
 
+    # Ensure resilient cross-platform encoding (converting raw Naira symbols to HTML entity)
+    full_html = full_html.replace('₦', '&#8358;')
+    plain_message = subject.replace('₦', 'NGN ')
+
     try:
         from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'AGAMOS Luxury Concierge <concierge@agamos.com>')
         print(f"[EMAIL DISPATCH] Attempting to send {email_type} email to {recipient_email} from {from_email}...")
         
         send_mail(
-            subject=subject,
-            message=subject,  # Plain text fallback
+            subject=subject.replace('₦', 'NGN '),
+            message=plain_message,  # Plain text fallback
             from_email=from_email,
             recipient_list=[recipient_email],
             html_message=full_html,

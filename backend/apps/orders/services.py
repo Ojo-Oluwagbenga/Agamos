@@ -139,6 +139,14 @@ def finalize_order_payment(order: Order, paystack_ref: str = None) -> Order:
 
         # Send confirmation email
         from apps.notifications.tasks import send_transactional_email_task
+        items_summary = [
+            {
+                'name': item.product_name,
+                'quantity': item.quantity,
+                'subtotal': f"₦{item.subtotal:,.2f}"
+            }
+            for item in order.items.all()
+        ]
         send_transactional_email_task(
             email_type='ORDER_CONFIRMATION',
             recipient_email=order.guest_email,
@@ -149,7 +157,8 @@ def finalize_order_payment(order: Order, paystack_ref: str = None) -> Order:
                 'client_name': order.guest_name,
                 'delivery_type': order.get_delivery_type_display(),
                 'total_amount': f"₦{order.total_amount:,.2f}",
-                'items_count': order.items.count()
+                'items_count': order.items.count(),
+                'items': items_summary
             }
         )
 

@@ -166,7 +166,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Paystack Payment Gateway Configuration
+# Paystack Payment Gateway & Bypass Configuration
+SKIP_PAYMENT = os.getenv('SKIP_PAYMENT', 'True').lower() in ('true', '1', 'yes')
 PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY', 'sk_test_agamos_dummy_secret_key')
 PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY', 'pk_test_agamos_dummy_public_key')
 PAYSTACK_BASE_URL = 'https://api.paystack.co'
@@ -180,13 +181,20 @@ CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_TIMEZONE = TIME_ZONE
 
-# Email Backend Configuration
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.sendgrid.net')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+# Free Email System Configuration (Gmail SMTP, Brevo, Resend, or Console)
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', 15))
+
+# Automatically select SMTP if credentials are provided, otherwise fallback to Console
+default_email_backend = (
+    'django.core.mail.backends.smtp.EmailBackend'
+    if (EMAIL_HOST_USER and EMAIL_HOST_PASSWORD)
+    else 'django.core.mail.backends.console.EmailBackend'
+)
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', default_email_backend)
 
 # SSL vs TLS Detection (Port 465 uses SSL, Port 587 uses TLS)
 if EMAIL_PORT == 465 or os.getenv('EMAIL_USE_SSL', 'False').lower() in ('true', '1'):

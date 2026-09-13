@@ -9,7 +9,10 @@ from .serializers import (
     OrderDetailSerializer,
     CheckoutInitiateSerializer
 )
-from .services import create_order_checkout
+from django.conf import settings
+from django.utils import timezone
+from .services import create_order_checkout, finalize_order_payment
+from apps.payments.models import PaymentTransaction
 from apps.payments.paystack import initialize_paystack_payment
 
 class CartView(views.APIView):
@@ -88,6 +91,30 @@ class CheckoutInitiateView(views.APIView):
             return Response({'error': msg}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': f'Failed to process order checkout: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Check if payment should be bypassed
+        skip_payment = getattr(settings, 'SKIP_PAYMENT', True)
+        if skip_payment:
+            payment_tx.status = PaymentTransaction.Status.SUCCESS
+            payment_tx.verified_at = timezone.now()
+            payment_tx.paystack_reference = 'SKIPPED_PAYMENT'
+            payment_tx.paystack_response_data = {'skipped': True, 'reason': 'Direct order placement with payment bypassed.'}
+            payment_tx.save()
+
+            finalize_order_payment(order, paystack_ref='SKIPPED_PAYMENT')
+            order.refresh_from_db()
+
+            order_data = OrderDetailSerializer(order).data
+            return Response({
+                'order': order_data,
+                'payment': {
+                    'reference': payment_tx.reference,
+                    'amount': str(payment_tx.amount),
+                    'authorization_url': None,
+                    'access_code': None,
+                    'skipped': True,
+                }
+            }, status=status.HTTP_201_CREATED)
 
         # Initialize Paystack
         paystack_result = initialize_paystack_payment(

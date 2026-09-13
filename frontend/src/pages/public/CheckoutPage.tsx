@@ -107,12 +107,14 @@ export const CheckoutPage: React.FC = () => {
 
     try {
       const result = await api.orders.checkout(payload);
-      success('Order Created', 'Redirecting to secure Paystack payment gateway.');
 
       const authUrl = result.payment?.authorization_url;
-      if (authUrl) {
+      if (authUrl && !result.payment?.skipped) {
+        success('Order Created', 'Redirecting to secure Paystack payment gateway.');
         window.location.href = authUrl;
       } else {
+        clearCart();
+        success('Order Confirmed!', 'Your order has been placed. A confirmation email has been dispatched.');
         navigate(`/order/${result.order.order_reference}`);
       }
     } catch (err: any) {
@@ -294,11 +296,11 @@ export const CheckoutPage: React.FC = () => {
                   isLoading={submitting}
                   rightIcon={<ArrowRight className="w-4 h-4" />}
                 >
-                  Pay with Paystack ({formatNGN(grandTotal)})
+                  Confirm Order ({formatNGN(grandTotal)})
                 </Button>
                 <div className="flex items-center justify-center space-x-2 text-[10px] text-luxury-muted">
                   <ShieldCheck className="w-3.5 h-3.5 text-luxury-gold" />
-                  <span>256-Bit Encrypted Paystack Transaction</span>
+                  <span>Direct Order Placement &bull; Confirmation Email Dispatched</span>
                 </div>
               </div>
             </div>

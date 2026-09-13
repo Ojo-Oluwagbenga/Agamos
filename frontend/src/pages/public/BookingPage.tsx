@@ -159,14 +159,14 @@ export const BookingPage: React.FC = () => {
 
     try {
       const result = await api.bookings.initiate(payload);
-      success('Reservation Hold Placed', 'Proceeding to secure Paystack transaction.');
 
-      // Check authorization url or mock checkout redirect
+      // Check authorization url or direct confirmation
       const authUrl = result.payment?.authorization_url;
-      if (authUrl) {
+      if (authUrl && !result.payment?.skipped) {
+        success('Reservation Hold Placed', 'Proceeding to secure Paystack transaction.');
         window.location.href = authUrl;
       } else {
-        // Direct fallback to booking confirmation page
+        success('Booking Confirmed!', 'Your luxury appointment is confirmed. Confirmation email and QR token dispatched.');
         navigate(`/booking/${result.booking.booking_reference}`);
       }
     } catch (err: any) {
@@ -572,10 +572,10 @@ export const BookingPage: React.FC = () => {
                     onClick={handleBookingSubmit}
                     rightIcon={<ArrowRight className="w-4 h-4" />}
                   >
-                    Confirm & Pay with Paystack
+                    Confirm Appointment ({formatNGN(grandTotal)})
                   </Button>
                   <p className="text-[10px] text-center text-luxury-muted">
-                    Instant Paystack verification &bull; Secure QR Attendance Token dispatched via Email
+                    Instant Confirmation &bull; Secure QR Attendance Token dispatched via Email
                   </p>
                 </div>
               </div>
