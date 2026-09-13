@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import { api } from '../../services/api';
 import { Booking } from '../../types';
 import { formatNGN, formatDate, formatTime12H } from '../../utils/formatters';
+import { getQrCodeUrl } from '../../utils/imageHelper';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 
@@ -88,7 +89,8 @@ export const BookingConfirmationPage: React.FC = () => {
     );
   }
 
-  const qrImageUrl = booking.qr_code?.qr_image || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=AGAMOS:VERIFY:${booking.qr_code?.secure_token || booking.booking_reference}`;
+  const qrFallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=AGAMOS:VERIFY:${booking.qr_code?.secure_token || booking.booking_reference}`;
+  const qrImageUrl = getQrCodeUrl(booking.qr_code, booking.booking_reference, 'BOOKING');
 
   return (
     <div className="bg-luxury-black text-luxury-white min-h-screen pt-28 pb-24 px-4 sm:px-6 lg:px-8">
@@ -128,6 +130,11 @@ export const BookingConfirmationPage: React.FC = () => {
                   src={qrImageUrl}
                   alt={`QR code for ${booking.booking_reference}`}
                   className="w-44 h-44 object-contain"
+                  onError={(e) => {
+                    if (e.currentTarget.src !== qrFallbackUrl) {
+                      e.currentTarget.src = qrFallbackUrl;
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-1">

@@ -4,6 +4,7 @@ import { Calendar, QrCode, Clock, MapPin, XCircle, AlertCircle, ArrowRight } fro
 import { api } from '../../services/api';
 import { Booking } from '../../types';
 import { formatNGN, formatDate, formatTime12H } from '../../utils/formatters';
+import { getQrCodeUrl } from '../../utils/imageHelper';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
@@ -172,12 +173,15 @@ export const MyBookingsPage: React.FC = () => {
           <div className="text-center space-y-4 py-2">
             <div className="bg-white p-4 inline-block shadow-lg mx-auto">
               <img
-                src={
-                  selectedQR.qr_code?.qr_image ||
-                  `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=AGAMOS:VERIFY:${selectedQR.qr_code?.secure_token || selectedQR.booking_reference}`
-                }
+                src={getQrCodeUrl(selectedQR.qr_code, selectedQR.booking_reference, 'BOOKING')}
                 alt="QR Pass"
                 className="w-48 h-48 object-contain"
+                onError={(e) => {
+                  const fallback = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=AGAMOS:VERIFY:${selectedQR.qr_code?.secure_token || selectedQR.booking_reference}`;
+                  if (e.currentTarget.src !== fallback) {
+                    e.currentTarget.src = fallback;
+                  }
+                }}
               />
             </div>
             <div className="space-y-1">

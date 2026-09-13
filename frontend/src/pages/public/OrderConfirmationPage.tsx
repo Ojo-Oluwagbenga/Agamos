@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import { Order } from '../../types';
 import { useCart } from '../../context/CartContext';
 import { formatNGN, formatDate } from '../../utils/formatters';
+import { getQrCodeUrl } from '../../utils/imageHelper';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 
@@ -89,6 +90,9 @@ export const OrderConfirmationPage: React.FC = () => {
     );
   }
 
+  const qrFallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=AGAMOS:ORDER:${order.order_reference}`;
+  const qrImageUrl = getQrCodeUrl(null, order.order_reference, 'ORDER');
+
   return (
     <div className="bg-luxury-black text-luxury-white min-h-screen pt-28 pb-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-10 animate-fade-in">
@@ -118,57 +122,84 @@ export const OrderConfirmationPage: React.FC = () => {
             <Badge status={order.status} />
           </div>
 
-          <div className="p-6 sm:p-10 space-y-8">
-            {/* Fulfillment Status Banner */}
-            <div className="bg-luxury-offblack border border-luxury-border p-4 flex items-center space-x-3">
-              {order.delivery_type === 'PICKUP' ? (
-                <Store className="w-5 h-5 text-luxury-gold flex-shrink-0" />
-              ) : (
-                <Truck className="w-5 h-5 text-luxury-gold flex-shrink-0" />
-              )}
-              <div className="text-xs">
-                <p className="font-semibold text-luxury-white">
-                  Fulfillment Method: {order.delivery_type_display}
-                </p>
-                <p className="text-luxury-muted mt-0.5">
-                  {order.delivery_type === 'PICKUP'
-                    ? 'Your parcel will be packaged in our Victoria Island flagship suite.'
-                    : `Dispatched to: ${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state}`}
+          <div className="p-6 sm:p-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            {/* Left QR Code Order Verification Pass */}
+            <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-luxury-offblack border border-luxury-gold/40 text-center space-y-4 shadow-gold-subtle">
+              <div className="bg-white p-3 shadow-md">
+                <img
+                  src={qrImageUrl}
+                  alt={`Order QR code for ${order.order_reference}`}
+                  className="w-44 h-44 object-contain"
+                  onError={(e) => {
+                    if (e.currentTarget.src !== qrFallbackUrl) {
+                      e.currentTarget.src = qrFallbackUrl;
+                    }
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase tracking-widest font-semibold text-luxury-gold block">
+                  Order Verification QR
+                </span>
+                <p className="text-[10px] text-luxury-muted max-w-[200px] leading-tight">
+                  Present this digital QR pass for flagship store pickup check-in or courier receipt verification.
                 </p>
               </div>
             </div>
 
-            {/* Items Table */}
-            <div className="space-y-4">
-              <h4 className="text-xs uppercase tracking-widest font-semibold text-luxury-gold">
-                Purchased Formulations
-              </h4>
-              <div className="divide-y divide-luxury-border/60">
-                {order.items.map((item) => (
-                  <div key={item.id} className="py-3 flex justify-between items-center text-xs">
-                    <div>
-                      <p className="font-medium text-luxury-white">{item.product_name}</p>
-                      <p className="text-luxury-muted">SKU: {item.sku} &bull; Qty: {item.quantity}</p>
+            {/* Right: Fulfillment & Items & Financials */}
+            <div className="md:col-span-7 space-y-6">
+              {/* Fulfillment Status Banner */}
+              <div className="bg-luxury-offblack border border-luxury-border p-4 flex items-center space-x-3">
+                {order.delivery_type === 'PICKUP' ? (
+                  <Store className="w-5 h-5 text-luxury-gold flex-shrink-0" />
+                ) : (
+                  <Truck className="w-5 h-5 text-luxury-gold flex-shrink-0" />
+                )}
+                <div className="text-xs">
+                  <p className="font-semibold text-luxury-white">
+                    Fulfillment Method: {order.delivery_type_display}
+                  </p>
+                  <p className="text-luxury-muted mt-0.5">
+                    {order.delivery_type === 'PICKUP'
+                      ? 'Your parcel will be packaged in our Victoria Island flagship suite.'
+                      : `Dispatched to: ${order.shipping_address}, ${order.shipping_city}, ${order.shipping_state}`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="space-y-4">
+                <h4 className="text-xs uppercase tracking-widest font-semibold text-luxury-gold">
+                  Purchased Formulations
+                </h4>
+                <div className="divide-y divide-luxury-border/60">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="py-3 flex justify-between items-center text-xs">
+                      <div>
+                        <p className="font-medium text-luxury-white">{item.product_name}</p>
+                        <p className="text-luxury-muted">SKU: {item.sku} &bull; Qty: {item.quantity}</p>
+                      </div>
+                      <span className="font-semibold text-luxury-white">{formatNGN(item.subtotal)}</span>
                     </div>
-                    <span className="font-semibold text-luxury-white">{formatNGN(item.subtotal)}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Financials Summary */}
-            <div className="pt-4 border-t border-luxury-border/60 space-y-2 text-xs">
-              <div className="flex justify-between text-luxury-muted">
-                <span>Subtotal</span>
-                <span>{formatNGN(order.subtotal_amount)}</span>
-              </div>
-              <div className="flex justify-between text-luxury-muted">
-                <span>Delivery Fee</span>
-                <span>{Number(order.delivery_fee) > 0 ? formatNGN(order.delivery_fee) : 'FREE'}</span>
-              </div>
-              <div className="pt-3 border-t border-luxury-border flex justify-between items-center text-sm font-semibold">
-                <span className="uppercase tracking-widest text-luxury-gold">Total Amount Paid</span>
-                <span className="text-base text-luxury-white">{formatNGN(order.total_amount)}</span>
+              {/* Financials Summary */}
+              <div className="pt-4 border-t border-luxury-border/60 space-y-2 text-xs">
+                <div className="flex justify-between text-luxury-muted">
+                  <span>Subtotal</span>
+                  <span>{formatNGN(order.subtotal_amount)}</span>
+                </div>
+                <div className="flex justify-between text-luxury-muted">
+                  <span>Delivery Fee</span>
+                  <span>{Number(order.delivery_fee) > 0 ? formatNGN(order.delivery_fee) : 'FREE'}</span>
+                </div>
+                <div className="pt-3 border-t border-luxury-border flex justify-between items-center text-sm font-semibold">
+                  <span className="uppercase tracking-widest text-luxury-gold">Total Amount Paid</span>
+                  <span className="text-base text-luxury-white">{formatNGN(order.total_amount)}</span>
+                </div>
               </div>
             </div>
           </div>
